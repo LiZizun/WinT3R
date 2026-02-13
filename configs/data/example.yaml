@@ -1,0 +1,43 @@
+# @package _global_
+
+train_dataset:
+    length: 10000000         # dummy
+
+    weights: 
+        TarTanAir: 1000
+
+    TarTanAir:
+        _target_: datasets.tartanair.TarTanAirDataset
+        z_far: 80
+        frame_num: 12
+        aug_crop: 16
+        transform:
+            _partial_: true
+            _target_: datasets.base.transforms.JitterJpegLossBlurring
+        aug_focal: 0.9
+        mode: 'train'
+
+
+train_dataloader:
+    drop_last: True
+    shuffle: True
+
+test_dataset:
+    weights: 
+        TarTanAir: 100
+
+    TarTanAir:
+        _target_: datasets.tartanair.TarTanAirDataset
+        z_far: 80
+        frame_num: 12
+        resolution:
+            - [512, 336]
+        transform:
+            _partial_: true
+            _target_: datasets.base.transforms.JitterJpegLossBlurring
+        aug_focal: 0.9
+        mode: 'test'
+
+test_dataloader:
+    drop_last: False
+    shuffle: False

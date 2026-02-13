@@ -41,6 +41,7 @@ class Block(nn.Module):
         qk_norm: bool = False,
         fused_attn: bool = True,  # use F.scaled_dot_product_attention or not
         rope=None,
+        window_size = 4,
     ) -> None:
         super().__init__()
 
@@ -56,6 +57,7 @@ class Block(nn.Module):
             qk_norm=qk_norm,
             fused_attn=fused_attn,
             rope=rope,
+            window_size = window_size,
         )
 
         self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()

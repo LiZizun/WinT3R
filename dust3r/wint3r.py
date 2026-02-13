@@ -17,6 +17,9 @@ from layers.pose_enc import pose_encoding_to_extri
 from dust3r.patch_embed import get_patch_embed
 from croco.models_croco.croco import CroCoNet, CrocoConfig  # noqa
 from dust3r.blocks import DecoderBlock, GlobalLocalDecoderBlock
+from accelerate.logging import get_logger
+
+printer = get_logger(__name__, log_level="DEBUG")
 
 inf = float("inf")
 
@@ -68,6 +71,7 @@ class WinT3R(CroCoNet):
                 state_pe="2d",
                 state_dec_num_heads=16,
                 ckpts=None,
+                pretrain_ckpts=None,
                 window_size=4,
                 **croco_kwargs,
                  ):
@@ -89,7 +93,7 @@ class WinT3R(CroCoNet):
         self.window_size = window_size
         self.cam_token = nn.Parameter(torch.randn(1, 1, self.dec_embed_dim))
 
-        self.cam_head = CameraHead(dim_in=self.dec_embed_dim*2, pose_encoding_type="absT_quaR")
+        self.cam_head = CameraHead(dim_in=self.dec_embed_dim*2, pose_encoding_type="absT_quaR", window_size=self.window_size)
         nn.init.normal_(self.cam_token, std=1e-6)
         self._set_state_decoder(
             self.enc_embed_dim,
@@ -107,10 +111,50 @@ class WinT3R(CroCoNet):
         )
         self.set_freeze(freeze)
 
+        if pretrain_ckpts is not None:
+            checkpoint = torch.load(ckpts, weights_only=False, map_location='cpu')
+            res = self.load_pretrain(checkpoint, strict=False)
+
         if ckpts is not None:
             weights = torch.load(ckpts, weights_only=False)
             res = self.load_state_dict(weights, strict=False)
             print(f'Load checkpoints from {ckpts}: {res}')
+
+    def load_pretrain(self, ckpt, **kw):
+        if all(k.startswith("module") for k in ckpt):
+            ckpt = strip_module(ckpt)
+        ckpt = ckpt['model']
+        new_ckpt = dict(ckpt)
+        # new_ckpt = new_ckpt['model']
+        if not any(k.startswith("dec_blocks_state") for k in ckpt):
+            for key, value in ckpt.items():
+                if key.startswith("dec_blocks"):
+                    new_ckpt[key.replace("dec_blocks", "dec_blocks_state")] = value
+        try:
+            return super().load_state_dict(new_ckpt, **kw)
+        except:
+            try:
+                new_new_ckpt = {
+                    k: v
+                    for k, v in new_ckpt.items()
+                    if not k.startswith("dec_blocks")
+                    and not k.startswith("dec_norm")
+                    and not k.startswith("decoder_embed")
+                }
+                return super().load_state_dict(new_new_ckpt, **kw)
+            except:
+                new_new_ckpt = {}
+                for key in new_ckpt:
+                    if key in self.state_dict():
+                        if new_ckpt[key].size() == self.state_dict()[key].size():
+                            new_new_ckpt[key] = new_ckpt[key]
+                        else:
+                            printer.info(
+                                f"Skipping '{key}': size mismatch (ckpt: {new_ckpt[key].size()}, model: {self.state_dict()[key].size()})"
+                            )
+                    else:
+                        printer.info(f"Skipping '{key}': not found in model")
+                return super().load_state_dict(new_new_ckpt, **kw)
 
     def _set_patch_embed(self, img_size=224, patch_size=16, enc_embed_dim=768):
         self.patch_embed = get_patch_embed(
@@ -492,7 +536,7 @@ class WinT3R(CroCoNet):
         if len(views) < self.window_size:
             views.extend([views[-1]]*(self.window_size-len(views)))
         elif len(views)%(self.window_size//2)!=0:
-            append_length = self.window_size//2 - len(views)%(self.window_size//2)
+            append_length = len(views)%(self.window_size//2)
             views.extend([views[-1]]*append_length)
 
         shape, feat_ls, pos = self._encode_views(views)
@@ -606,7 +650,7 @@ class WinT3R(CroCoNet):
         if len(views) < self.window_size:
             views.extend([views[-1]]*(self.window_size-len(views)))
         elif len(views)%(self.window_size//2)!=0:
-            append_length = self.window_size//2 - len(views)%(self.window_size//2)
+            append_length = len(views)%(self.window_size//2)
             views.extend([views[-1]]*append_length)
 
         state_feat, state_pos = None, None

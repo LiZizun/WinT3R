@@ -1,0 +1,43 @@
+# @package hydra.job_logging
+# python logging configuration for tasks
+version: 1
+formatters:
+  simple:
+    format: '%(message)s'
+  detailed:
+    format: '[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: detailed
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    formatter: detailed
+    # filename: ${work_dir}/outputs/${name}-${now:%Y-%m-%d_%H-%M-%S}/log.log
+    filename: ${work_dir}/outputs/${name}/log.log
+root:
+  level: INFO
+  handlers: [console, file]
+
+loggers:
+  boto3:
+    level: WARNING
+    handlers: [console, file]
+    propagate: no
+  botocore:
+    level: WARNING
+    handlers: [console, file]
+    propagate: no
+  s3transfer:
+    level: WARNING
+    handlers: [console, file]
+    propagate: no
+  urllib3:
+    level: WARNING
+    handlers: [console, file]
+    propagate: no
+  h5py:
+    level: WARNING
+
+disable_existing_loggers: False

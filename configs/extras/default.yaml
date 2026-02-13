@@ -1,0 +1,5 @@
+# disable python warnings if they annoy you
+ignore_warnings: false
+
+# pretty print config tree at the start of the run using Rich library
+print_config: true

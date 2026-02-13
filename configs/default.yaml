@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - model: wint3r.yaml
+  - train: train_wint3r
+  - data: example.yaml
+  - general: default.yaml
+  - extras: default.yaml
+  - override hydra/job_logging: custom
+  - override hydra/hydra_logging: colorlog
+  - _self_

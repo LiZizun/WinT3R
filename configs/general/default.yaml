@@ -1,0 +1,27 @@
+# @package _global_
+
+name: 'template'
+working_dir: ${work_dir}
+random_seed: 1111
+
+log:
+  # output_dir: '${work_dir}/outputs/${name}-${now:%Y-%m-%d_%H-%M-%S}'
+  output_dir: '${work_dir}/outputs/${name}'
+  use_tensorboard: true
+  use_wandb: false
+  wandb_init_conf:
+    name: ${name}
+    entity: ethan-predator
+    project: ${name}
+  summary_interval: 1 # interval of step
+  ckpt_interval: 10 # interval of epoch
+  max_checkpoints: 3
+  # ckpt_dir: '${work_dir}/outputs/${name}-${now:%Y-%m-%d_%H-%M-%S}/ckpts'
+  ckpt_dir: '${work_dir}/outputs/${name}/ckpts'
+
+hydra:
+  run:
+    # dir: ${work_dir}/outputs/${name}-${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${work_dir}/outputs/${name}
+
+work_dir: ${hydra:runtime.cwd}

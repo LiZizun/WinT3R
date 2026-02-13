@@ -31,6 +31,7 @@ class Attention(nn.Module):
         qk_norm: bool = False,
         fused_attn: bool = True,  # use F.scaled_dot_product_attention or not
         rope=None,
+        window_size = 4
     ) -> None:
         super().__init__()
         assert dim % num_heads == 0, "dim should be divisible by num_heads"
@@ -46,6 +47,7 @@ class Attention(nn.Module):
         self.proj = nn.Linear(dim, dim, bias=proj_bias)
         self.proj_drop = nn.Dropout(proj_drop)
         self.rope = rope
+        self.window_size = window_size
 
     def forward(self, x: Tensor, pos=None) -> Tensor:
         B, N, C = x.shape
@@ -57,7 +59,7 @@ class Attention(nn.Module):
             q = self.rope(q, pos)
             k = self.rope(k, pos)
 
-        attn_mask = window_mask(N)
+        attn_mask = window_mask(N, self.window_size)
         attn_mask = attn_mask.to(x.device)
         # attn_mask=None
 

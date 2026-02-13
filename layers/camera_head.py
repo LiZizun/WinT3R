@@ -28,6 +28,7 @@ class CameraHead(nn.Module):
         trans_act: str = "linear",
         quat_act: str = "linear",
         fl_act: str = "relu",  # Field of view activations: ensures FOV values are positive.
+        window_size = 4
     ):
         super().__init__()
 
@@ -51,6 +52,7 @@ class CameraHead(nn.Module):
                     num_heads=num_heads,
                     mlp_ratio=mlp_ratio,
                     init_values=init_values,
+                    window_size = window_size,
                 )
                 for _ in range(trunk_depth)
             ]
