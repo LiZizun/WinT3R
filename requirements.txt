@@ -3,3 +3,12 @@ numpy
 opencv-python
 typing
 transformers
+hydra-core
+einops
+h5py
+omegaconf
+pandas
+scipy
+accelerate
+easydict
+rich

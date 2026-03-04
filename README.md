@@ -31,7 +31,7 @@ improves the quality of camera pose prediction with a global perspective.
 ## 🛠️ TODO List
 - [x] Release point cloud and camera pose estimation code.
 - [ ] Release evaluation code.
-- [ ] Release training code.
+- [x] Release training code.
 
 ## 🌍 Installation
 
@@ -56,7 +56,14 @@ python recon.py
 # Run on your own data
 python recon.py --data_path <path/to/your/images_dir>
 ```
+## 📈 Training
+You can train the model on using the following command:
 
+```bash
+accelerate launch --config_file configs/accelerate/ddp.yaml \
+--num_processes 8 --num_machines 1 \
+scripts/train.py
+```
 
 ## 📜 Citation 
 ```bibtex
